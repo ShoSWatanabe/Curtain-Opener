@@ -15,7 +15,7 @@ const int ledPin = 2;           // Built-in LED
 bool timerSet = false;
 bool finished = false;
 bool testConnectionBool = false;
-double timeLeft = -1;               // This is the actual Time left
+double timeLeft = -1;           // This is the actual Time left
 String timerVal = "";           // This is the planned time of opening curtain
 
 BLECharacteristic *pTxCharacteristic;
@@ -41,7 +41,7 @@ class ServerCallbacks: public BLEServerCallbacks {
 
 // First char: 
 //  - s = state => return "NOT SET", "timer set for: hr:min", "FINISHED"
-//  - t = set time => remaining bytes: "hr:min" => return hr:min
+//  - t = set time => remaining bytes: FIRST_HALF,SECOND_HALF => first half = __:__ am/pm, second half = time left in seconds => return hr:min
 //  - 1 = blink led for test
 //  - r = reset => time = -1, timerSet = false, finished = false
 class CustomCallbacks: public BLECharacteristicCallbacks {
@@ -67,18 +67,27 @@ class CustomCallbacks: public BLECharacteristicCallbacks {
         } else if (incomingChar == 't') {
           timerSet = true;
           // extract data: FIRST_HALF,SECOND_HALF => first half = __:__ am/pm, second half = time left in seconds
-          // timeLeft = time left in seconds 
-          // timerVal =  __:__ am/pm
+          String payload = rxValue.substring(1);
+          int commaIndex = payload.indexOf(',');
 
-          // send data:  "timer set for: hr:min"
-          sendNotification("TIMER SET: " + timerVal);
+          if (commaIndex != -1) {
+            timerVal = payload.substring(0,commaIndex);
+            timeLeft = payload.substring(commaIndex + 1).toDouble();
+
+            timerSet = true;
+            finished = false;
+
+            // send data:  "timer set for: hr:min"
+            sendNotification("TIMER SET: " + timerVal);
+          } else {
+            sendNotification("ERROR: Invalid format. Use txx:xx AM/PM,SECONDS_LEFT");
+          }
 
         } else if (incomingChar == 'r') {
           timerSet = false;
           timeLeft = -1;
           finished = false;
           sendNotification("TIMER RESET");
-
         }
       }
     }
@@ -94,24 +103,24 @@ void setup() {
   // Set up built in LED
   pinMode(ledPin, OUTPUT);
 
-  // 1. Initialize BLE Stack
+  // Initialize BLE Stack
   BLEDevice::init("ESP32_Curtain_Control");
 
-  // 2. Create Server & Attach Callbacks for connection status
+  // Create Server & Attach Callbacks for connection status
   BLEServer *pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks());
 
-  // 3. Create Service
+  // Create Service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // 4. Create RX Characteristic (Phone -> ESP32)
+  // Create RX Characteristic (Phone -> ESP32)
   BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(
       CHARACTERISTIC_UUID_RX,
       BLECharacteristic::PROPERTY_WRITE
   );
   pRxCharacteristic->setCallbacks(new CustomCallbacks());
 
-  // 5. Create TX Characteristic (ESP32 -> Phone Notifications)
+  // Create TX Characteristic (ESP32 -> Phone Notifications)
   pTxCharacteristic = pService->createCharacteristic(
       CHARACTERISTIC_UUID_TX,
       BLECharacteristic::PROPERTY_NOTIFY
@@ -119,7 +128,7 @@ void setup() {
   // Add Descriptor to allow client notifications
   pTxCharacteristic->addDescriptor(new BLE2902());
 
-  // 6. Start Service & Advertising
+  // Start Service & Advertising
   pService->start();
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
@@ -149,12 +158,29 @@ void pull() {
 // Release the curtain rope to unwind
 void release() {
   servo.write(70);
-  delay(5000);
+  delay(6000);
   servo.write(95);  // Stop motor
 }
 
+
+unsigned long previousMillis = 0;
+const long interval = 1000; // 1 second tick interval
+
 void loop() {
+  // Non-blocking 1-second countdown timer
+  unsigned long currentMillis = millis();
   if (timerSet && timeLeft > 0 && !finished) {
+    if (currentMillis - previousMillis >= interval) {
+      previousMillis = currentMillis;
+      timeLeft--; // Subtract 1 second
+    }
+  }
+
+  // Check if blink test is needed
+  if (testConnectionBool) testConnection();
+
+  // Check if time is up
+  if (timerSet && timeLeft <= 0 && !finished) {
     pull();
     release();
     timerSet = false;
