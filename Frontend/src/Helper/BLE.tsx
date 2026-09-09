@@ -16,8 +16,13 @@ async function connectBLE(
 
     // 1. Request the BLE Device
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ name: "ESP32_Curtain_Control" }],
-      optionalServices: [SERVICE_UUID],
+      filters: [
+        {
+          name: "ESP32_Curtain_Control",
+          services: [SERVICE_UUID], // <-- Explicitly tell iOS to scan for this service UUID!
+        },
+      ],
+      optionalServices: [SERVICE_UUID], // Keep this for spec compliance
     });
 
     // 2. Connect to GATT Server
