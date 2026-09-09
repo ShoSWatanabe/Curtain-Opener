@@ -68,7 +68,7 @@ class CustomCallbacks: public BLECharacteristicCallbacks {
           timerSet = true;
           // extract data: FIRST_HALF,SECOND_HALF => first half = __:__ am/pm, second half = time left in seconds
           String payload = rxValue.substring(1);
-          int commaIndex = payload.indexOf(',');
+          int commaIndex = payload.lastIndexOf(',');
 
           if (commaIndex != -1) {
             timerVal = payload.substring(0,commaIndex);
