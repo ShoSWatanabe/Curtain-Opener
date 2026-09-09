@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import showError from "./toast";
 import type { Dispatch, SetStateAction } from "react";
 
@@ -6,10 +5,7 @@ const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 const RX_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 const TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-// Use useRef so the BLE characteristic persists across component re-renders
-const rxCharacteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(
-  null,
-);
+let rxCharacteristic: BluetoothRemoteGATTCharacteristic | null = null;
 
 async function connectBLE(
   setStatus: Dispatch<SetStateAction<string>>,
@@ -31,7 +27,7 @@ async function connectBLE(
     const service = await server.getPrimaryService(SERVICE_UUID);
 
     // 3. Store RX Characteristic for sending commands
-    rxCharacteristicRef.current = await service.getCharacteristic(RX_UUID);
+    rxCharacteristic = await service.getCharacteristic(RX_UUID);
 
     // 4. Set up TX Characteristic for notifications
     const txCharacteristic = await service.getCharacteristic(TX_UUID);
@@ -65,7 +61,7 @@ const sendCommand = async (
   setConnected: Dispatch<SetStateAction<boolean>>,
   command: string,
 ) => {
-  if (!rxCharacteristicRef.current) {
+  if (!rxCharacteristic) {
     showError("Please connect to the ESP32 first!");
     setConnected(false);
     setStatus(`Disconnected`);
@@ -74,7 +70,7 @@ const sendCommand = async (
 
   try {
     const encoder = new TextEncoder();
-    await rxCharacteristicRef.current.writeValue(encoder.encode(command));
+    await rxCharacteristic.writeValue(encoder.encode(command));
   } catch (error) {
     console.error("Failed to send command:", error);
     setConnected(false);

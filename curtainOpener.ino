@@ -15,6 +15,7 @@ const int ledPin = 2;           // Built-in LED
 bool timerSet = false;
 bool finished = false;
 bool testConnectionBool = false;
+bool stopAfterDelayBool = false;
 double timeLeft = -1;           // This is the actual Time left
 String timerVal = "";           // This is the planned time of opening curtain
 
@@ -88,6 +89,14 @@ class CustomCallbacks: public BLECharacteristicCallbacks {
           timeLeft = -1;
           finished = false;
           sendNotification("TIMER RESET");
+        } else if (incomingChar == 'i') {
+          servo.write(125);
+          stopAfterDelayBool = true;
+          sendNotification("Pulling");
+        } else if (incomingChar == 'o') {
+          servo.write(70);
+          stopAfterDelayBool = true;
+          sendNotification("Releasing");
         }
       }
     }
@@ -162,6 +171,11 @@ void release() {
   servo.write(95);  // Stop motor
 }
 
+void stopAfterDelay() {
+  delay(1000);
+  servo.write(95);  // Stop motor
+  stopAfterDelayBool = false;
+}
 
 unsigned long previousMillis = 0;
 const long interval = 1000; // 1 second tick interval
@@ -175,6 +189,9 @@ void loop() {
       timeLeft--; // Subtract 1 second
     }
   }
+
+  // Check if pulling or releasing is recieved
+  if (stopAfterDelay) stopAfterDelay();
 
   // Check if blink test is needed
   if (testConnectionBool) testConnection();
