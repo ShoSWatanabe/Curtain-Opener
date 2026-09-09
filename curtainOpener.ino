@@ -19,6 +19,13 @@ bool stopAfterDelayBool = false;
 double timeLeft = -1;           // This is the actual Time left
 String timerVal = "";           // This is the planned time of opening curtain
 
+// modify these values
+const int PULL_SPEED = 145;
+const int RELEASE_SPEED = 70;
+const int PULL_TIME = 15000;
+const int RELEASE_TIME = 11000;
+
+
 BLECharacteristic *pTxCharacteristic;
 
 // Helper function to send notification messages back to client
@@ -56,13 +63,13 @@ class CustomCallbacks: public BLECharacteristicCallbacks {
         } else if (incomingChar == 's') {
           if (timerSet) {
             // send data: "timer set for: hr:min"
-            sendNotification("STATUS: Time set for " + timerVal);
+            sendNotification("Time set for " + timerVal);
           } else if (finished) {
             // send data: "FINISHED"
-            sendNotification("STATUS: Finished");
+            sendNotification("Finished");
           } else {
             // send data: "NOT SET"
-            sendNotification("STATUS: Timer not set");
+            sendNotification("Timer not set");
           }
           
         } else if (incomingChar == 't') {
@@ -90,11 +97,11 @@ class CustomCallbacks: public BLECharacteristicCallbacks {
           finished = false;
           sendNotification("TIMER RESET");
         } else if (incomingChar == 'i') {
-          servo.write(125);
+          servo.write(PULL_SPEED);
           stopAfterDelayBool = true;
           sendNotification("Pulling");
         } else if (incomingChar == 'o') {
-          servo.write(70);
+          servo.write(RELEASE_SPEED);
           stopAfterDelayBool = true;
           sendNotification("Releasing");
         }
@@ -103,7 +110,7 @@ class CustomCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
-  Serial.begin(115200);
+  // Serial.begin(115200);
 
   // Set up servo
   servo.attach(27);  
@@ -143,7 +150,7 @@ void setup() {
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->start();
 
-  Serial.println("BLE Ready and Advertising...");
+  // Serial.println("BLE Ready and Advertising...");
 }
 
 void testConnection() {
@@ -159,15 +166,15 @@ void testConnection() {
 
 // Pull the curtain rope to open curtain
 void pull() {
-  servo.write(125);
-  delay(5000);
+  servo.write(PULL_SPEED);
+  delay(PULL_TIME);
   servo.write(95);  // Stop motor
 }
 
 // Release the curtain rope to unwind
 void release() {
-  servo.write(70);
-  delay(6000);
+  servo.write(RELEASE_SPEED);
+  delay(RELEASE_TIME);
   servo.write(95);  // Stop motor
 }
 
@@ -191,7 +198,7 @@ void loop() {
   }
 
   // Check if pulling or releasing is recieved
-  if (stopAfterDelay) stopAfterDelay();
+  if (stopAfterDelayBool) stopAfterDelay();
 
   // Check if blink test is needed
   if (testConnectionBool) testConnection();
@@ -204,4 +211,5 @@ void loop() {
     finished = true;
     timeLeft = -1;
   }
+  // Serial.println(timeLeft);
 }

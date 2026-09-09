@@ -41,12 +41,12 @@ async function connectBLE(
         if (target.value) {
           const decoder = new TextDecoder("utf-8");
           const message = decoder.decode(target.value);
-          setStatus(`Notification: ${message}`);
+          setStatus(message);
         }
       },
     );
 
-    setStatus("Status: Connected!");
+    setStatus("Connected!");
     setConnected(true);
   } catch (error) {
     console.error(error);
@@ -114,7 +114,7 @@ const sendTimer = (
   });
 
   // Payload sent to ESP32: e.g., "t07:30 AM,300"
-  showError(totalSeconds.toString());
+  showError(`${totalSeconds.toString()} Seconds left:`);
   sendCommand(setStatus, setConnected, `t${formattedTime},${totalSeconds}`);
 };
 
