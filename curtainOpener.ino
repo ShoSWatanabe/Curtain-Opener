@@ -20,9 +20,9 @@ double timeLeft = -1;           // This is the actual Time left
 String timerVal = "";           // This is the planned time of opening curtain
 
 // modify these values
-const int PULL_SPEED = 145;
+const int PULL_SPEED = 140;
 const int RELEASE_SPEED = 70;
-const int PULL_TIME = 15000;
+const int PULL_TIME = 14500;
 const int RELEASE_TIME = 11000;
 const int STOP = 95;
 
@@ -167,7 +167,7 @@ void testConnection() {
 
 // Pull the curtain rope to open curtain
 void pull() {
-  servo.write((PULL_SPEED + STOP)/2); // Small initial speed so the power spike dosn't occur and turn off esp
+  servo.write((PULL_SPEED + STOP)/2); // Small initial speed so a big power spike dosn't occur and turn off esp
   delay(1000);
   servo.write(PULL_SPEED);
   delay(PULL_TIME);
