@@ -24,6 +24,7 @@ const int PULL_SPEED = 145;
 const int RELEASE_SPEED = 70;
 const int PULL_TIME = 15000;
 const int RELEASE_TIME = 11000;
+const int STOP = 95;
 
 
 BLECharacteristic *pTxCharacteristic;
@@ -114,7 +115,7 @@ void setup() {
 
   // Set up servo
   servo.attach(27);  
-  servo.write(95);   // stop
+  servo.write(STOP);   // stop
 
   // Set up built in LED
   pinMode(ledPin, OUTPUT);
@@ -166,21 +167,23 @@ void testConnection() {
 
 // Pull the curtain rope to open curtain
 void pull() {
+  servo.write((PULL_SPEED + STOP)/2); // Small initial speed so the power spike dosn't occur and turn off esp
+  delay(1000);
   servo.write(PULL_SPEED);
   delay(PULL_TIME);
-  servo.write(95);  // Stop motor
+  servo.write(STOP);  
 }
 
 // Release the curtain rope to unwind
 void release() {
   servo.write(RELEASE_SPEED);
   delay(RELEASE_TIME);
-  servo.write(95);  // Stop motor
+  servo.write(STOP);  
 }
 
 void stopAfterDelay() {
   delay(1000);
-  servo.write(95);  // Stop motor
+  servo.write(STOP);  
   stopAfterDelayBool = false;
 }
 

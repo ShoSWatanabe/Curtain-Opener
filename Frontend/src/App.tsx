@@ -48,7 +48,7 @@ function App() {
           <div className="flex justify-around">
             {/* Left */}
             <div className="flex flex-col justify-center items-center w-[50%]">
-              <p>Runnable Commands:</p>
+              <p>Commands:</p>
               <div className="flex flex-col items-center w-[90%]">
                 <button
                   className="bg-[#fcf3ca] rounded-[0.8rem] cursor-pointer hover:shadow-md shadow-sm p-1 m-1 w-full"
