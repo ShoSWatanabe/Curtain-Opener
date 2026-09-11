@@ -14,7 +14,7 @@ async function connectBLE(
   try {
     setStatus("Connecting...");
 
-    // 1. Request the BLE Device
+    // Request the BLE Device
     const device = await navigator.bluetooth.requestDevice({
       filters: [
         {
@@ -25,16 +25,16 @@ async function connectBLE(
       optionalServices: [SERVICE_UUID], // Keep this for spec compliance
     });
 
-    // 2. Connect to GATT Server
+    // Connect to GATT Server
     const server = await device.gatt?.connect();
     if (!server) throw new Error("Could not connect to GATT server");
 
     const service = await server.getPrimaryService(SERVICE_UUID);
 
-    // 3. Store RX Characteristic for sending commands
+    // Store RX Characteristic for sending commands
     rxCharacteristic = await service.getCharacteristic(RX_UUID);
 
-    // 4. Set up TX Characteristic for notifications
+    // Set up TX Characteristic for notifications
     const txCharacteristic = await service.getCharacteristic(TX_UUID);
     await txCharacteristic.startNotifications();
 

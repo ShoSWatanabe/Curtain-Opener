@@ -74,17 +74,24 @@ class CustomCallbacks: public BLECharacteristicCallbacks {
           }
           
         } else if (incomingChar == 't') {
-          timerSet = true;
           // extract data: FIRST_HALF,SECOND_HALF => first half = __:__ am/pm, second half = time left in seconds
           String payload = rxValue.substring(1);
           int commaIndex = payload.lastIndexOf(',');
 
           if (commaIndex != -1) {
             timerVal = payload.substring(0,commaIndex);
-            timeLeft = payload.substring(commaIndex + 1).toDouble();
+            String s = payload.substring(commaIndex + 1);
+            s.trim();
+            timeLeft = s.toDouble();
+
+            if (timeLeft <= 0) {
+              sendNotification("ERROR: Parsed 0 seconds");
+              return;
+            }
 
             timerSet = true;
             finished = false;
+            previousMillis = millis(); // Reset timing baseline
 
             // send data:  "timer set for: hr:min"
             sendNotification("TIMER SET: " + timerVal);
@@ -195,7 +202,7 @@ void loop() {
   unsigned long currentMillis = millis();
   if (timerSet && timeLeft > 0 && !finished) {
     if (currentMillis - previousMillis >= interval) {
-      previousMillis = currentMillis;
+      previousMillis += interval;
       timeLeft--; // Subtract 1 second
     }
   }
